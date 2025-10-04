@@ -22,6 +22,7 @@ This crate is not related to any official Bevy organisation repository in any wa
 
 |`bevy_mod_imgui`|`bevy`  |`wgpu`  |`imgui` |`imgui-wgpu`      |
 |----------------|--------|--------|--------|------------------|
+| 0.8.*          | 0.17.* | 26.*   | 0.12.* | 0.24.0 (bundled) |
 | 0.7.*          | 0.16.* | 24.*   | 0.12.* | 0.24.0 (bundled) |
 | 0.6.*          | 0.15.* | 23.*   | 0.12.* | 0.24.0 (bundled) |
 | 0.5.*          | 0.14.* | 0.20.* | 0.11.* | 0.24.0 (bundled) |
@@ -44,6 +45,7 @@ The following examples are provided:
 
 ## Changelog
 
+* `0.8.0` - Update to wgpu `26.0`, Bevy `0.17.0`.
 * `0.7.2` - Fix backend renderer to support ImGui 1.86+ modals
 * `0.7.1` - Fix for crash in imgui-wpu-rs when the draw list is empty
 * `0.7.0` - Update to wgpu `24.0`, Bevy `0.16.0`. Improved safety / stability of texture management
