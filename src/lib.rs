@@ -435,18 +435,21 @@ pub struct ImguiPlugin {
     pub apply_display_scale_to_font_oversample: bool,
 }
 
+#[cfg(not(feature = "docking"))]
+fn default_config_flags() -> ConfigFlags {
+    ConfigFlags::empty()
+}
+
+#[cfg(feature = "docking")]
+fn default_config_flags() -> ConfigFlags {
+    ConfigFlags::DOCKING_ENABLE
+}
+
 impl Default for ImguiPlugin {
     fn default() -> Self {
-        let mut config_flags = ConfigFlags::empty();
-
-        // enable docking by default if the feature is enabled
-        if cfg!(feature = "docking") {
-            config_flags |= ConfigFlags::DOCKING_ENABLE;
-        }
-
         Self {
             ini_filename: Default::default(),
-            config_flags,
+            config_flags: default_config_flags(),
             font_size: 13.0,
             font_oversample_h: 1,
             font_oversample_v: 1,
