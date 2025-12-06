@@ -123,7 +123,10 @@ impl ImguiContext {
     where
         F: FnOnce(&mut imgui::Io) -> R,
     {
-        let mut ctx = self.ctx.write().expect("Failed to acquire write access to ImGui context");
+        let mut ctx = self
+            .ctx
+            .write()
+            .expect("Failed to acquire write access to ImGui context");
         f(ctx.io_mut())
     }
 
