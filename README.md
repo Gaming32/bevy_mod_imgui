@@ -45,7 +45,7 @@ The following examples are provided:
 
 ## Changelog
 
-* `0.8.0` - Update to wgpu `26.0`, Bevy `0.17.0`.
+* `0.8.0` - Update to wgpu `26.0`, Bevy `0.17.0`. Fix render glitches when texture format / display scale is changed.
 * `0.7.2` - Fix backend renderer to support ImGui 1.86+ modals
 * `0.7.1` - Fix for crash in imgui-wpu-rs when the draw list is empty
 * `0.7.0` - Update to wgpu `24.0`, Bevy `0.16.0`. Improved safety / stability of texture management
