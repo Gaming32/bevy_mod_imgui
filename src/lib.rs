@@ -123,10 +123,8 @@ impl ImguiContext {
     where
         F: FnOnce(&mut imgui::Io) -> R,
     {
-        unsafe {
-            let mut ctx = self.ctx.write().unwrap();
-            f(ctx.io_mut())
-        }
+        let mut ctx = self.ctx.write().expect("Failed to acquire write access to ImGui context");
+        f(ctx.io_mut())
     }
 
     /// Register a Bevy texture with ImGui. The provided Handle must be strong, and
