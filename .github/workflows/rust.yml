@@ -22,12 +22,12 @@ jobs:
       with:
         components: rustfmt, clippy
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --verbose --all-targets --all-features
     - name: Run tests
-      run: cargo test --verbose
+      run: cargo test --verbose --all-targets --all-features
     - name: Run format checks
       run: cargo fmt --all -- --check
     - name: Run clippy
-      run: cargo clippy --workspace --all-targets -- -Dwarnings --no-deps
+      run: cargo clippy --workspace --all-targets --all-features -- -Dwarnings --no-deps
     - name: Run doc
-      run: cargo doc --no-deps
+      run: cargo doc --no-deps --all-features
