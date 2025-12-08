@@ -40,12 +40,15 @@
 //! struct, so that flags can be configured:
 //!
 //! ```no_run
+//! # use bevy::prelude::*;
+//! # use bevy_mod_imgui::prelude::*;
+//! # let mut app = App::new();
 //! app.add_plugins(bevy_mod_imgui::ImguiPlugin::default())
 //!    .add_systems(Startup, |mut imgui: NonSendMut<ImguiContext>| {
 //!         imgui.with_io_mut(|io| {
 //!             io.config_docking_always_tab_bar = true;
 //!         });
-//!     })
+//!     });
 //! ```
 //!
 //! # Minimal Example with Docking
@@ -165,6 +168,9 @@ impl ImguiContext {
     ///
     /// Example:
     /// ```no_run
+    /// # use bevy::prelude::*;
+    /// # use bevy_mod_imgui::prelude::*;
+    /// # let mut app = App::new();
     /// app.add_systems(Update, |mut context: NonSendMut<ImguiContext>| {
     ///     let window = context.ui().window("Hello World!");
     ///     window.build(|| {});
@@ -184,6 +190,9 @@ impl ImguiContext {
     ///
     /// Example:
     /// ```no_run
+    /// # use bevy::prelude::*;
+    /// # use bevy_mod_imgui::prelude::*;
+    /// # let mut app = App::new();
     /// app.add_systems(Update, |mut context: NonSendMut<ImguiContext>| {
     ///     context.with_ui_mut(|ui| {
     ///         let window = ui.window("Hello World!");
@@ -208,6 +217,9 @@ impl ImguiContext {
     ///
     /// Example:
     /// ```no_run
+    /// # use bevy::prelude::*;
+    /// # use bevy_mod_imgui::prelude::*;
+    /// # let mut app = App::new();
     /// app.add_systems(Startup, |mut imgui: NonSendMut<ImguiContext>| {
     ///     imgui.with_io_mut(|io| {
     ///         io.config_docking_always_tab_bar = true;
