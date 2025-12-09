@@ -50,7 +50,8 @@ The following examples are provided:
 * `empty` - to demonstrate that an empty draw list is handled gracefully (bug regression example)
 * `hello-world` - to demonstrate basic ImGui functionality (via its demo window)
 * `hello-world-postupdate` - to demonstrate emitting ImGui from the PostUpdate stage
-* `minimal` - to demonstrate the most minimal example of setting up the plug-in
+* `minimal` - matches the minimal example from the documentation
+* `minimal-docking` - matches the minimal docking example from the documentation
 * `render-to-texture` - to demonstrate rendering a Bevy scene to a texture and displaying the result on an ImGui window
 
 
