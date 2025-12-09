@@ -58,7 +58,7 @@
 //! ```no_run
 //! use bevy::prelude::*;
 //! use bevy_mod_imgui::prelude::*;
-//! 
+//!
 //! fn main() {
 //!     let mut app = App::new();
 //!     app.insert_resource(ClearColor(Color::srgba(0.2, 0.2, 0.2, 1.0)))
@@ -72,7 +72,7 @@
 //!         .add_systems(Update, imgui_example_ui);
 //!     app.run();
 //! }
-//! 
+//!
 //! fn imgui_example_ui(mut context: NonSendMut<ImguiContext>) {
 //!     let ui = context.ui();
 //!     ui.dockspace_over_main_viewport();
