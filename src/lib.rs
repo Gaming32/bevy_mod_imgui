@@ -33,6 +33,67 @@
 //!     }
 //! }
 //! ```
+//!
+//! # Configuring the [`imgui::Io`] flags
+//!
+//! During Startup, the `with_io_mut` function can be used to get mutable access to the underlying [`imgui::Io`]
+//! struct, so that flags can be configured:
+//!
+//! ```no_run
+//! # use bevy::prelude::*;
+//! # use bevy_mod_imgui::prelude::*;
+//! # #[cfg(feature = "docking")]
+//! # fn feature_guard() {
+//! # let mut app = App::new();
+//! app.add_plugins(bevy_mod_imgui::ImguiPlugin::default())
+//!    .add_systems(Startup, |mut imgui: NonSendMut<ImguiContext>| {
+//!         imgui.with_io_mut(|io| {
+//!             io.config_docking_always_tab_bar = true;
+//!         });
+//!     });
+//! # }
+//! ```
+//!
+//! # Minimal Example with Docking
+//!
+//! With the `docking` feature enabled, windows can be docked by creating a dock space, and then creating them as usual:
+//!
+//! ```no_run
+//! use bevy::prelude::*;
+//! use bevy_mod_imgui::prelude::*;
+//!
+//! # #[cfg(not(feature = "docking"))]
+//! # fn main() {
+//! # }
+//! #
+//! # #[cfg(feature = "docking")]
+//! fn main() {
+//!     let mut app = App::new();
+//!     app.insert_resource(ClearColor(Color::srgba(0.2, 0.2, 0.2, 1.0)))
+//!         .add_plugins(DefaultPlugins)
+//!         .add_plugins(bevy_mod_imgui::ImguiPlugin {
+//!             ..Default::default()
+//!         })
+//!         .add_systems(Startup, |mut commands: Commands| {
+//!             commands.spawn(Camera3d::default());
+//!         })
+//!         .add_systems(Update, imgui_example_ui);
+//!     app.run();
+//! }
+//!
+//! # #[cfg(feature = "docking")]
+//! fn imgui_example_ui(mut context: NonSendMut<ImguiContext>) {
+//!     let ui = context.ui();
+//!     ui.dockspace_over_main_viewport();
+//!     let window = ui.window("Drag me");
+//!     window
+//!         .size([300.0, 100.0], imgui::Condition::FirstUseEver)
+//!         .position([0.0, 0.0], imgui::Condition::FirstUseEver)
+//!         .build(|| {
+//!             ui.text("Drag the window title-bar to dock it!");
+//!         });
+//! }
+//! ```
 
 use bevy::{
     asset::StrongHandle,
@@ -56,7 +117,7 @@ use bevy::{
     },
     window::PrimaryWindow,
 };
-use imgui::{FontSource, OwnedDrawData, TextureId};
+use imgui::{ConfigFlags, FontSource, OwnedDrawData, TextureId};
 mod imgui_wgpu_rs_local;
 use imgui_wgpu_rs_local::{Renderer, RendererConfig, Texture};
 use std::{
@@ -73,10 +134,15 @@ use wgpu::{
 
 /// The ImGui context resource.
 ///
-/// This should be added to your Bevy app as a `NonSendMut` resource (as it is not thread safe).
+/// This should be added to your Bevy app as a [`NonSendMut`] resource (as it is not thread safe).
 ///
-/// You can use this object to obtain a reference to the underlying `imgui::Ui` object for submitting
-/// UI elements to imgui. This should be done during the Update and PostUpdate phase only.
+/// You can use this object to obtain a reference to the various underlying Imgui objects:
+///
+/// - Use the [`with_io_mut`](Self::with_io_mut) function to access the [`imgui::Io`] object for configuring Imgui.
+///   This should be done during Startup only
+/// - Use the [`with_ui_mut`](Self::with_ui_mut) or [`ui`](Self::ui) functions to access the [`imgui::Ui`] object for submitting UI elements to Imgui.
+///   This should be done during Update and PostUpdate only
+///
 pub struct ImguiContext {
     ctx: RwLock<imgui::Context>,
     plugin_settings: ImguiPlugin,
@@ -105,9 +171,20 @@ struct ImguiExtractState {
 }
 
 impl ImguiContext {
-    /// Provides mutable access to the underlying `imgui::Ui` object.
+    /// Provides mutable access to the underlying [`imgui::Ui`] object.
     ///
-    /// Use this to submit UI elements to imgui.
+    /// Use this to submit UI elements to Imgui during Update and PostUpdate.
+    ///
+    /// Example:
+    /// ```no_run
+    /// # use bevy::prelude::*;
+    /// # use bevy_mod_imgui::prelude::*;
+    /// # let mut app = App::new();
+    /// app.add_systems(Update, |mut context: NonSendMut<ImguiContext>| {
+    ///     let window = context.ui().window("Hello World!");
+    ///     window.build(|| {});
+    /// });
+    /// ```
     pub fn ui(&mut self) -> &mut imgui::Ui {
         unsafe {
             self.ui
@@ -116,10 +193,67 @@ impl ImguiContext {
         }
     }
 
+    /// Runs the given function with mutable access to the underlying [`imgui::Ui`] object.
+    ///
+    /// Use this to submit UI elements to Imgui during Update and PostUpdate.
+    ///
+    /// Example:
+    /// ```no_run
+    /// # use bevy::prelude::*;
+    /// # use bevy_mod_imgui::prelude::*;
+    /// # let mut app = App::new();
+    /// app.add_systems(Update, |mut context: NonSendMut<ImguiContext>| {
+    ///     context.with_ui_mut(|ui| {
+    ///         let window = ui.window("Hello World!");
+    ///         window.build(|| {});
+    ///     });
+    /// });
+    /// ```
+    pub fn with_ui_mut<F, R>(&mut self, f: F) -> R
+    where
+        F: FnOnce(&mut imgui::Ui) -> R,
+    {
+        f(unsafe {
+            self.ui
+                .expect("Not currenty rendering an imgui frame!")
+                .as_mut()
+        })
+    }
+
+    /// Runs the given function with mutable access to the underlying [`imgui::Io`] object.
+    ///
+    /// Use this to configure imgui settings, for example in a Startup system.
+    ///
+    /// Example:
+    /// ```no_run
+    /// # use bevy::prelude::*;
+    /// # use bevy_mod_imgui::prelude::*;
+    /// # #[cfg(feature = "docking")]
+    /// # fn feature_guard() {
+    /// # let mut app = App::new();
+    /// app.add_systems(Startup, |mut imgui: NonSendMut<ImguiContext>| {
+    ///     imgui.with_io_mut(|io| {
+    ///         io.config_docking_always_tab_bar = true;
+    ///     });
+    /// });
+    /// # }
+    /// ```
+    pub fn with_io_mut<F, R>(&mut self, f: F) -> R
+    where
+        F: FnOnce(&mut imgui::Io) -> R,
+    {
+        let mut ctx = self
+            .ctx
+            .write()
+            .expect("Failed to acquire write access to ImGui context");
+        f(ctx.io_mut())
+    }
+
     /// Register a Bevy texture with ImGui. The provided Handle must be strong, and
-    /// the texture will be kept alive until `unregister_bevy_texture` is called to
-    /// release the texture.
-    /// This function returns an `imgui::TextureId` that can be immediately used with
+    /// the texture will be kept alive until [`unregister_bevy_texture`](Self::unregister_bevy_texture)
+    /// is called to release the texture.
+    ///
+    /// This function returns an [`imgui::TextureId`] that can be immediately used with
     /// the underlying ImGui context.
     pub fn register_bevy_texture(&mut self, handle: Handle<Image>) -> imgui::TextureId {
         // We require strong handles here to ensure the image is alive at the point that
@@ -138,9 +272,12 @@ impl ImguiContext {
         }
     }
 
-    /// Unregister a Bevy texture with ImGui. The texture must have previously been
-    /// registered with `register_bevy_texture` - this function expects the
-    /// `imgui::TextureId` returned by `register_bevy_texture` to be to be passed here.
+    /// Unregister a Bevy texture with ImGui.
+    ///
+    /// The texture must have previously been registered with
+    /// [`register_bevy_texture`](Self::register_bevy_texture) - this function expects
+    /// the [`imgui::TextureId`] returned by [`register_bevy_texture`](Self::register_bevy_texture)
+    /// to be to be passed here.
     pub fn unregister_bevy_texture(&mut self, texture_id: &TextureId) {
         self.textures.remove(texture_id);
         self.texture_modify
@@ -403,6 +540,9 @@ pub struct ImguiPlugin {
     /// Pass None to disable automatic .Ini saving
     pub ini_filename: Option<PathBuf>,
 
+    /// The config flags to supply to ImGui's IO when the context is initialized.
+    pub config_flags: ConfigFlags,
+
     /// The unscaled font size to use (default is 13).
     pub font_size: f32,
 
@@ -419,10 +559,21 @@ pub struct ImguiPlugin {
     pub apply_display_scale_to_font_oversample: bool,
 }
 
+#[cfg(not(feature = "docking"))]
+fn default_config_flags() -> ConfigFlags {
+    ConfigFlags::empty()
+}
+
+#[cfg(feature = "docking")]
+fn default_config_flags() -> ConfigFlags {
+    ConfigFlags::DOCKING_ENABLE
+}
+
 impl Default for ImguiPlugin {
     fn default() -> Self {
         Self {
             ini_filename: Default::default(),
+            config_flags: default_config_flags(),
             font_size: 13.0,
             font_oversample_h: 1,
             font_oversample_v: 1,
@@ -442,6 +593,8 @@ impl Plugin for ImguiPlugin {
         for key_index in 0..imgui::Key::COUNT {
             ctx.io_mut()[imgui::Key::VARIANTS[key_index]] = key_index as _;
         }
+
+        ctx.io_mut().config_flags = self.config_flags;
 
         let display_scale = {
             let mut system_state: SystemState<Query<&Window, With<PrimaryWindow>>> =

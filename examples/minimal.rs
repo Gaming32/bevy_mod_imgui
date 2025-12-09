@@ -1,3 +1,4 @@
+// Example that matches the minimal example in the documentation.
 use bevy::prelude::*;
 use bevy_mod_imgui::prelude::*;
 

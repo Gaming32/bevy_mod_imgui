@@ -31,11 +31,22 @@ This crate is not related to any official Bevy organisation repository in any wa
 | 0.2.*          | 0.12.* | 0.17.1 | 0.11.* | 0.24.*           |
 | 0.1.*          | 0.11.* | 0.16.* | 0.11.* | 0.23.*           |
 
+## Optional Features
+
+### Docking Windows
+
+Support for docking windows can be turned on by enabling the `docking` feature.
+
+Use the following command to run the docking demo: `cargo run --example docking --features docking`
+
+![docking example](media/docking.gif)
+
 ## Examples
 
 The following examples are provided:
 
 * `custom-texture` - to demonstrate how to display a Bevy texture in an ImGui window
+* `docking` - to demonstrate the `docking` feature (see above)
 * `empty` - to demonstrate that an empty draw list is handled gracefully (bug regression example)
 * `hello-world` - to demonstrate basic ImGui functionality (via its demo window)
 * `hello-world-postupdate` - to demonstrate emitting ImGui from the PostUpdate stage
@@ -45,7 +56,7 @@ The following examples are provided:
 
 ## Changelog
 
-* `0.8.0` - Update to wgpu `26.0`, Bevy `0.17.0`. Fix render glitches when texture format / display scale is changed.
+* `0.8.0` - Add `docking` feature. Update to wgpu `26.0`, Bevy `0.17.0`. Fix render glitch when texture format / display scale is changed.
 * `0.7.2` - Fix backend renderer to support ImGui 1.86+ modals
 * `0.7.1` - Fix for crash in imgui-wpu-rs when the draw list is empty
 * `0.7.0` - Update to wgpu `24.0`, Bevy `0.16.0`. Improved safety / stability of texture management
