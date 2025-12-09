@@ -34,9 +34,9 @@
 //! }
 //! ```
 //!
-//! # Configuring the `Imgui::IO` flags
+//! # Configuring the [`imgui::Io`] flags
 //!
-//! During Startup, the `with_io_mut` function can be used to get mutable access to the underlying `imgui::Io`
+//! During Startup, the `with_io_mut` function can be used to get mutable access to the underlying [`imgui::Io`]
 //! struct, so that flags can be configured:
 //!
 //! ```no_run
@@ -134,13 +134,13 @@ use wgpu::{
 
 /// The ImGui context resource.
 ///
-/// This should be added to your Bevy app as a `NonSendMut` resource (as it is not thread safe).
+/// This should be added to your Bevy app as a [`NonSendMut`] resource (as it is not thread safe).
 ///
 /// You can use this object to obtain a reference to the various underlying Imgui objects:
 ///
-/// - Use the `with_io_mut` function to access the `imgui::Io` object for configuring Imgui.
+/// - Use the [`with_io_mut`](Self::with_io_mut) function to access the [`imgui::Io`] object for configuring Imgui.
 ///   This should be done during Startup only
-/// - Use the `with_ui_mut` or `ui` functions to access the `imgui::Ui` object for submitting UI elements to Imgui.
+/// - Use the [`with_ui_mut`](Self::with_ui_mut) or [`ui`](Self::ui) functions to access the [`imgui::Ui`] object for submitting UI elements to Imgui.
 ///   This should be done during Update and PostUpdate only
 ///
 pub struct ImguiContext {
@@ -171,7 +171,7 @@ struct ImguiExtractState {
 }
 
 impl ImguiContext {
-    /// Provides mutable access to the underlying `imgui::Ui` object.
+    /// Provides mutable access to the underlying [`imgui::Ui`] object.
     ///
     /// Use this to submit UI elements to Imgui during Update and PostUpdate.
     ///
@@ -193,7 +193,7 @@ impl ImguiContext {
         }
     }
 
-    /// Runs the given function with mutable access to the underlying `imgui::Ui` object.
+    /// Runs the given function with mutable access to the underlying [`imgui::Ui`] object.
     ///
     /// Use this to submit UI elements to Imgui during Update and PostUpdate.
     ///
@@ -220,7 +220,7 @@ impl ImguiContext {
         })
     }
 
-    /// Runs the given function with mutable access to the underlying `imgui::Io` object.
+    /// Runs the given function with mutable access to the underlying [`imgui::Io`] object.
     ///
     /// Use this to configure imgui settings, for example in a Startup system.
     ///
@@ -250,9 +250,10 @@ impl ImguiContext {
     }
 
     /// Register a Bevy texture with ImGui. The provided Handle must be strong, and
-    /// the texture will be kept alive until `unregister_bevy_texture` is called to
-    /// release the texture.
-    /// This function returns an `imgui::TextureId` that can be immediately used with
+    /// the texture will be kept alive until [`unregister_bevy_texture`](Self::unregister_bevy_texture)
+    /// is called to release the texture.
+    ///
+    /// This function returns an [`imgui::TextureId`] that can be immediately used with
     /// the underlying ImGui context.
     pub fn register_bevy_texture(&mut self, handle: Handle<Image>) -> imgui::TextureId {
         // We require strong handles here to ensure the image is alive at the point that
@@ -271,9 +272,12 @@ impl ImguiContext {
         }
     }
 
-    /// Unregister a Bevy texture with ImGui. The texture must have previously been
-    /// registered with `register_bevy_texture` - this function expects the
-    /// `imgui::TextureId` returned by `register_bevy_texture` to be to be passed here.
+    /// Unregister a Bevy texture with ImGui.
+    ///
+    /// The texture must have previously been registered with
+    /// [`register_bevy_texture`](Self::register_bevy_texture) - this function expects
+    /// the [`imgui::TextureId`] returned by [`register_bevy_texture`](Self::register_bevy_texture)
+    /// to be to be passed here.
     pub fn unregister_bevy_texture(&mut self, texture_id: &TextureId) {
         self.textures.remove(texture_id);
         self.texture_modify
