@@ -42,6 +42,8 @@
 //! ```no_run
 //! # use bevy::prelude::*;
 //! # use bevy_mod_imgui::prelude::*;
+//! # #[cfg(feature = "docking")]
+//! # fn feature_guard() {
 //! # let mut app = App::new();
 //! app.add_plugins(bevy_mod_imgui::ImguiPlugin::default())
 //!    .add_systems(Startup, |mut imgui: NonSendMut<ImguiContext>| {
@@ -49,6 +51,7 @@
 //!             io.config_docking_always_tab_bar = true;
 //!         });
 //!     });
+//! # }
 //! ```
 //!
 //! # Minimal Example with Docking
@@ -59,6 +62,11 @@
 //! use bevy::prelude::*;
 //! use bevy_mod_imgui::prelude::*;
 //!
+//! # #[cfg(not(feature = "docking"))]
+//! # fn main() {
+//! # }
+//! #
+//! # #[cfg(feature = "docking")]
 //! fn main() {
 //!     let mut app = App::new();
 //!     app.insert_resource(ClearColor(Color::srgba(0.2, 0.2, 0.2, 1.0)))
@@ -73,6 +81,7 @@
 //!     app.run();
 //! }
 //!
+//! # #[cfg(feature = "docking")]
 //! fn imgui_example_ui(mut context: NonSendMut<ImguiContext>) {
 //!     let ui = context.ui();
 //!     ui.dockspace_over_main_viewport();
@@ -219,12 +228,15 @@ impl ImguiContext {
     /// ```no_run
     /// # use bevy::prelude::*;
     /// # use bevy_mod_imgui::prelude::*;
+    /// # #[cfg(feature = "docking")]
+    /// # fn feature_guard() {
     /// # let mut app = App::new();
     /// app.add_systems(Startup, |mut imgui: NonSendMut<ImguiContext>| {
     ///     imgui.with_io_mut(|io| {
     ///         io.config_docking_always_tab_bar = true;
     ///     });
     /// });
+    /// # }
     /// ```
     pub fn with_io_mut<F, R>(&mut self, f: F) -> R
     where
