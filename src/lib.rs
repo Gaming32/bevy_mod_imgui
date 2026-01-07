@@ -119,6 +119,7 @@ use bevy::{
 };
 use imgui::{ConfigFlags, FontSource, OwnedDrawData, TextureId};
 mod imgui_wgpu_rs_local;
+use bevy::image::ImageSampler;
 use imgui_wgpu_rs_local::{Renderer, RendererConfig, Texture};
 use std::{
     collections::HashMap,
@@ -384,6 +385,7 @@ fn add_image_to_renderer(
     texture_id: &TextureId,
     strong: &Arc<StrongHandle>,
     gpu_images: &RenderAssets<GpuImage>,
+    images: &Assets<Image>,
     renderer: &mut Renderer,
     device: &RenderDevice,
 ) {
@@ -393,19 +395,35 @@ fn add_image_to_renderer(
         let view_arc = std::sync::Arc::new(gpu_image.texture_view.deref().clone());
         let config = imgui_wgpu_rs_local::RawTextureConfig {
             label: Some("Bevy Texture for ImGui"),
-            sampler_desc: wgpu::SamplerDescriptor {
-                label: Some("Bevy Texture Sampler for ImGui"),
-                address_mode_u: wgpu::AddressMode::ClampToEdge,
-                address_mode_v: wgpu::AddressMode::ClampToEdge,
-                address_mode_w: wgpu::AddressMode::ClampToEdge,
-                mag_filter: wgpu::FilterMode::Linear,
-                min_filter: wgpu::FilterMode::Linear,
-                mipmap_filter: wgpu::FilterMode::Linear,
-                lod_min_clamp: 0.0,
-                lod_max_clamp: 100.0,
-                compare: None,
-                anisotropy_clamp: 1,
-                border_color: None,
+            sampler_desc: match images.get(&handle).map(|i| &i.sampler) {
+                Some(ImageSampler::Descriptor(desc)) => wgpu::SamplerDescriptor {
+                    label: Some("Bevy Texture Sampler for ImGui"),
+                    address_mode_u: desc.address_mode_u.into(),
+                    address_mode_v: desc.address_mode_v.into(),
+                    address_mode_w: desc.address_mode_w.into(),
+                    mag_filter: desc.mag_filter.into(),
+                    min_filter: desc.min_filter.into(),
+                    mipmap_filter: desc.mipmap_filter.into(),
+                    lod_min_clamp: desc.lod_min_clamp,
+                    lod_max_clamp: desc.lod_max_clamp,
+                    compare: desc.compare.map(Into::into),
+                    anisotropy_clamp: desc.anisotropy_clamp,
+                    border_color: desc.border_color.map(Into::into),
+                },
+                None | Some(ImageSampler::Default) => wgpu::SamplerDescriptor {
+                    label: Some("Bevy Texture Sampler for ImGui"),
+                    address_mode_u: wgpu::AddressMode::ClampToEdge,
+                    address_mode_v: wgpu::AddressMode::ClampToEdge,
+                    address_mode_w: wgpu::AddressMode::ClampToEdge,
+                    mag_filter: wgpu::FilterMode::Linear,
+                    min_filter: wgpu::FilterMode::Linear,
+                    mipmap_filter: wgpu::FilterMode::Linear,
+                    lod_min_clamp: 0.0,
+                    lod_max_clamp: 100.0,
+                    compare: None,
+                    anisotropy_clamp: 1,
+                    border_color: None,
+                },
             },
         };
 
@@ -1027,6 +1045,7 @@ fn imgui_update_textures_system(
     mut render_context: ResMut<ImguiRenderContext>,
     device: Res<RenderDevice>,
     gpu_images: Res<RenderAssets<GpuImage>>,
+    images: Res<Assets<Image>>,
 ) {
     // Remove all textures that are flagged for removal
     let render_context = render_context.as_mut();
@@ -1042,7 +1061,14 @@ fn imgui_update_textures_system(
     let mut added_textures = Vec::<TextureId>::new();
     for (texture_id, handle) in &render_context.textures_to_add {
         let mut renderer = render_context.renderer.write().unwrap();
-        add_image_to_renderer(texture_id, handle, &gpu_images, &mut renderer, &device);
+        add_image_to_renderer(
+            texture_id,
+            handle,
+            &gpu_images,
+            &images,
+            &mut renderer,
+            &device,
+        );
         added_textures.push(*texture_id);
     }
     for texture_id in &added_textures {
