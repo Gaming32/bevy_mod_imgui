@@ -297,7 +297,7 @@ struct NonSendHack;
 struct ImguiRenderContext {
     renderer: RwLock<Renderer>,
     draw: OwnedDrawDataWrap,
-    textures_to_add: HashMap<TextureId, Arc<StrongHandle>>,
+    textures_to_add: HashMap<TextureId, (Arc<StrongHandle>, ImageSampler)>,
     textures_to_remove: Vec<TextureId>,
 }
 
@@ -385,7 +385,7 @@ fn add_image_to_renderer(
     texture_id: &TextureId,
     strong: &Arc<StrongHandle>,
     gpu_images: &RenderAssets<GpuImage>,
-    images: &Assets<Image>,
+    sampler: &ImageSampler,
     renderer: &mut Renderer,
     device: &RenderDevice,
 ) {
@@ -395,8 +395,8 @@ fn add_image_to_renderer(
         let view_arc = std::sync::Arc::new(gpu_image.texture_view.deref().clone());
         let config = imgui_wgpu_rs_local::RawTextureConfig {
             label: Some("Bevy Texture for ImGui"),
-            sampler_desc: match images.get(&handle).map(|i| &i.sampler) {
-                Some(ImageSampler::Descriptor(desc)) => wgpu::SamplerDescriptor {
+            sampler_desc: match sampler {
+                ImageSampler::Descriptor(desc) => wgpu::SamplerDescriptor {
                     label: Some("Bevy Texture Sampler for ImGui"),
                     address_mode_u: desc.address_mode_u.into(),
                     address_mode_v: desc.address_mode_v.into(),
@@ -410,7 +410,7 @@ fn add_image_to_renderer(
                     anisotropy_clamp: desc.anisotropy_clamp,
                     border_color: desc.border_color.map(Into::into),
                 },
-                None | Some(ImageSampler::Default) => wgpu::SamplerDescriptor {
+                ImageSampler::Default => wgpu::SamplerDescriptor {
                     label: Some("Bevy Texture Sampler for ImGui"),
                     address_mode_u: wgpu::AddressMode::ClampToEdge,
                     address_mode_v: wgpu::AddressMode::ClampToEdge,
@@ -934,6 +934,7 @@ fn imgui_extract_frame_system(
     extracted_windows: ResMut<ExtractedWindows>,
     device: Res<RenderDevice>,
     queue: ResMut<RenderQueue>,
+    images: Res<Assets<Image>>,
     _non_send: NonSend<NonSendHack>,
 ) {
     // Get the extract state
@@ -948,10 +949,13 @@ fn imgui_extract_frame_system(
         render_context.renderer = RwLock::new(extract_state.next_frame_renderer.take().unwrap());
 
         // Re-add all textures
-        for texture_id in imgui_context.textures.keys() {
+        for (texture_id, reference) in imgui_context.textures.iter() {
+            let sampler = images
+                .get(&Handle::<Image>::Strong(reference.clone()))
+                .map_or(ImageSampler::Default, |x| x.sampler.clone());
             render_context
                 .textures_to_add
-                .insert(*texture_id, imgui_context.textures[texture_id].clone());
+                .insert(*texture_id, (reference.clone(), sampler));
         }
     }
 
@@ -1028,9 +1032,13 @@ fn imgui_extract_frame_system(
 
     // Update textures that have been added this frame
     for texture_id in imgui_context.texture_modify.read().unwrap().to_add.iter() {
+        let reference = imgui_context.textures[texture_id].clone();
+        let sampler = images
+            .get(&Handle::<Image>::Strong(reference.clone()))
+            .map_or(ImageSampler::Default, |x| x.sampler.clone());
         render_context
             .textures_to_add
-            .insert(*texture_id, imgui_context.textures[texture_id].clone());
+            .insert(*texture_id, (reference, sampler));
     }
 
     let mut texture_modify = imgui_context.texture_modify.write().unwrap();
@@ -1045,7 +1053,6 @@ fn imgui_update_textures_system(
     mut render_context: ResMut<ImguiRenderContext>,
     device: Res<RenderDevice>,
     gpu_images: Res<RenderAssets<GpuImage>>,
-    images: Res<Assets<Image>>,
 ) {
     // Remove all textures that are flagged for removal
     let render_context = render_context.as_mut();
@@ -1059,13 +1066,13 @@ fn imgui_update_textures_system(
 
     // Add new textures
     let mut added_textures = Vec::<TextureId>::new();
-    for (texture_id, handle) in &render_context.textures_to_add {
+    for (texture_id, (handle, sampler)) in &render_context.textures_to_add {
         let mut renderer = render_context.renderer.write().unwrap();
         add_image_to_renderer(
             texture_id,
             handle,
             &gpu_images,
-            &images,
+            &sampler,
             &mut renderer,
             &device,
         );
