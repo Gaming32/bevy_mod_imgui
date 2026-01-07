@@ -934,7 +934,7 @@ fn imgui_extract_frame_system(
     extracted_windows: ResMut<ExtractedWindows>,
     device: Res<RenderDevice>,
     queue: ResMut<RenderQueue>,
-    images: Res<Assets<Image>>,
+    images: Extract<Res<Assets<Image>>>,
     _non_send: NonSend<NonSendHack>,
 ) {
     // Get the extract state
