@@ -927,6 +927,7 @@ fn imgui_end_frame_system(mut context: NonSendMut<ImguiContext>) {
     context.extract_state.get_mut().unwrap().rendered_draw_data = OwnedDrawData::from(draw_data);
 }
 
+#[allow(clippy::too_many_arguments)]
 fn imgui_extract_frame_system(
     primary_window: Extract<Query<&Window, With<PrimaryWindow>>>,
     mut imgui_context: Extract<NonSend<ImguiContext>>,
@@ -1072,7 +1073,7 @@ fn imgui_update_textures_system(
             texture_id,
             handle,
             &gpu_images,
-            &sampler,
+            sampler,
             &mut renderer,
             &device,
         );
